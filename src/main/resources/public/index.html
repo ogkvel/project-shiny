@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Task Manager</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .task-form { margin-bottom: 20px; padding: 20px; border: 1px solid #ddd; }
+        .task-item { padding: 10px; border: 1px solid #eee; margin: 5px 0; }
+        button { margin: 5px; padding: 5px 10px; }
+        input, textarea { margin: 5px; padding: 5px; width: 200px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Task Manager</h1>
+
+    <!-- Task Form -->
+    <div class="task-form">
+        <h3>Add/Edit Task</h3>
+        <input type="hidden" id="taskId">
+        <input type="text" id="title" placeholder="Title" required><br>
+        <textarea id="description" placeholder="Description"></textarea><br>
+        <input type="date" id="dueDate" required><br>
+        <label><input type="checkbox" id="completed"> Completed</label><br>
+        <button onclick="saveTask()">Save Task</button>
+        <button onclick="clearForm()">Clear</button>
+    </div>
+
+    <!-- Task List -->
+    <div id="taskList"></div>
+</div>
+
+<script>
+    let editingId = null;
+
+    // Load tasks on page load
+    document.addEventListener('DOMContentLoaded', loadTasks);
+
+    async function loadTasks() {
+        const response = await fetch('/api/tasks');
+        const tasks = await response.json();
+
+        const taskList = document.getElementById('taskList');
+        taskList.innerHTML = '<h3>Tasks</h3>';
+
+        tasks.forEach(task => {
+            const taskDiv = document.createElement('div');
+            taskDiv.className = 'task-item';
+            taskDiv.innerHTML = `
+                <strong>${task.title}</strong> - ${new Date(task.dueDate).toLocaleDateString()}
+                ${task.completed ? '✓' : '○'}
+                <p>${task.description}</p>
+                <button onclick="editTask(${task.id})">Edit</button>
+                <button onclick="deleteTask(${task.id})">Delete</button>
+            `;
+            taskList.appendChild(taskDiv);
+        });
+    }
+
+    async function saveTask() {
+        const task = {
+            title: document.getElementById('title').value,
+            description: document.getElementById('description').value,
+            dueDate: document.getElementById('dueDate').value,
+            completed: document.getElementById('completed').checked
+        };
+
+        const url = editingId ? `/api/tasks/${editingId}` : '/api/tasks';
+        const method = editingId ? 'PUT' : 'POST';
+
+        await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(task)
+        });
+
+        clearForm();
+        loadTasks();
+    }
+
+    async function editTask(id) {
+        const response = await fetch(`/api/tasks/${id}`);
+        const task = await response.json();
+
+        document.getElementById('taskId').value = task.id;
+        document.getElementById('title').value = task.title;
+        document.getElementById('description').value = task.description;
+        document.getElementById('dueDate').value = task.dueDate.split('T')[0];
+        document.getElementById('completed').checked = task.completed;
+
+        editingId = id;
+    }
+
+    async function deleteTask(id) {
+        if (confirm('Are you sure?')) {
+            await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+            loadTasks();
+        }
+    }
+
+    function clearForm() {
+        document.getElementById('taskId').value = '';
+        document.getElementById('title').value = '';
+        document.getElementById('description').value = '';
+        document.getElementById('dueDate').value = '';
+        document.getElementById('completed').checked = false;
+        editingId = null;
+    }
+</script>
+</body>
+</html>
