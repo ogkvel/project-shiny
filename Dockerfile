@@ -23,4 +23,4 @@ COPY --from=builder /app/target/project-shimer-1.0-SNAPSHOT.jar app.jar
 EXPOSE 10000
 
 # Команда для запуска приложения
-CMD ["java", "-jar", "app.jar"]
+CMD ["java", "-cp", "app.jar", "com.ogkvel.Main"]
