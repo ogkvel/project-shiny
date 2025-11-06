@@ -41,11 +41,12 @@ public class Database {
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
 
-            // SQL для PostgreSQL (SERIAL вместо AUTO_INCREMENT)
             String createTableSQL = "CREATE TABLE IF NOT EXISTS tasks (" +
                     "id SERIAL PRIMARY KEY, " +
                     "title VARCHAR(255), " +
                     "description TEXT, " +
+                    "due_date DATE, " +
+                    "completed BOOLEAN DEFAULT FALSE, " +
                     "created_at TIMESTAMP DEFAULT NOW())";
 
             stmt.executeUpdate(createTableSQL);
