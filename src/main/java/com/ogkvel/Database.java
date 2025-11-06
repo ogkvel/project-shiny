@@ -14,15 +14,14 @@ public class Database {
     }
 
     public static Connection getConnection() throws SQLException {
-        // Проверяем переменную окружения (DB_URL вместо DATABASE_URL)
         String databaseUrl = System.getenv("DB_URL");
 
         if (databaseUrl != null && !databaseUrl.isEmpty()) {
-            // Режим Render - используем PostgreSQL
             System.out.println("Using PostgreSQL on Render");
-            return DriverManager.getConnection(databaseUrl);
+            // Добавляем параметр отключения SSL проверки
+            String urlWithSSLDisabled = databaseUrl + "&sslmode=disable";
+            return DriverManager.getConnection(urlWithSSLDisabled);
         } else {
-            // Локальная разработка - используем MySQL
             System.out.println("Using MySQL for local development");
             return DriverManager.getConnection(
                     "jdbc:mysql://localhost:3306/crud_app",
