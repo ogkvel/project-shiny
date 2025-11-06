@@ -4,23 +4,23 @@ import java.sql.*;
 
 public class Database {
     static {
-        // Загружаем только H2 драйвер для Render
         try {
-            Class.forName("org.h2.Driver");
-            System.out.println("H2 Driver loaded successfully");
+            // Загружаем PostgreSQL драйвер
+            Class.forName("org.postgresql.Driver");
+            System.out.println("PostgreSQL Driver loaded successfully");
         } catch (ClassNotFoundException e) {
-            System.out.println("H2 Driver not found: " + e.getMessage());
+            System.out.println("PostgreSQL Driver error: " + e.getMessage());
         }
     }
 
     public static Connection getConnection() throws SQLException {
-        // Проверяем, работает ли приложение на Render
-        String databaseUrl = System.getenv("DATABASE_URL");
+        // Проверяем переменную окружения (DB_URL вместо DATABASE_URL)
+        String databaseUrl = System.getenv("DB_URL");
 
         if (databaseUrl != null && !databaseUrl.isEmpty()) {
-            // Режим Render - используем H2 in-memory
-            System.out.println("Using H2 Database on Render");
-            return DriverManager.getConnection("jdbc:h2:mem:crudapp;DB_CLOSE_DELAY=-1", "sa", "");
+            // Режим Render - используем PostgreSQL
+            System.out.println("Using PostgreSQL on Render");
+            return DriverManager.getConnection(databaseUrl);
         } else {
             // Локальная разработка - используем MySQL
             System.out.println("Using MySQL for local development");
@@ -36,15 +36,15 @@ public class Database {
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
 
-            // Упрощенный SQL для H2
+            // SQL для PostgreSQL (SERIAL вместо AUTO_INCREMENT)
             String createTableSQL = "CREATE TABLE IF NOT EXISTS tasks (" +
-                    "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                    "id SERIAL PRIMARY KEY, " +
                     "title VARCHAR(255), " +
-                    "description VARCHAR(1000), " +
+                    "description TEXT, " +
                     "created_at TIMESTAMP DEFAULT NOW())";
 
             stmt.executeUpdate(createTableSQL);
-            System.out.println("Database table created successfully");
+            System.out.println("PostgreSQL table created successfully");
 
         } catch (SQLException e) {
             System.out.println("Error creating table: " + e.getMessage());
