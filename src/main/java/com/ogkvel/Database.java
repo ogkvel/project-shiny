@@ -18,9 +18,15 @@ public class Database {
 
         if (databaseUrl != null && !databaseUrl.isEmpty()) {
             System.out.println("Using PostgreSQL on Render");
-            // Добавляем параметр отключения SSL проверки
-            String urlWithSSLDisabled = databaseUrl + "&sslmode=disable";
-            return DriverManager.getConnection(urlWithSSLDisabled);
+            String username = System.getenv("DB_USER");
+            String password = System.getenv("DB_PASSWORD");
+
+            System.out.println("Connecting to: " + databaseUrl);
+            System.out.println("Username: " + username);
+
+            // Добавляем sslmode=disable в URL
+            String urlWithSSL = databaseUrl + "?sslmode=disable";
+            return DriverManager.getConnection(urlWithSSL, username, password);
         } else {
             System.out.println("Using MySQL for local development");
             return DriverManager.getConnection(
