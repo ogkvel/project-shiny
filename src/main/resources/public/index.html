@@ -3,31 +3,174 @@
 <head>
     <title>Task Manager</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .task-form { margin-bottom: 20px; padding: 20px; border: 1px solid #ddd; }
-        .task-item { padding: 10px; border: 1px solid #eee; margin: 5px 0; }
-        button { margin: 5px; padding: 5px 10px; }
-        input, textarea { margin: 5px; padding: 5px; width: 200px; }
+        /* Глобальные настройки и фон */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6; /* Светлый, приятный фон */
+            color: #333;
+        }
+
+        /* Основной контейнер */
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Легкая тень */
+            border-radius: 8px;
+        }
+
+        /* Заголовок */
+        h1 {
+            color: #007bff; /* Основной акцентный цвет */
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-bottom: 25px;
+        }
+
+        /* Форма добавления/редактирования */
+        .task-form {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background-color: #fcfcfc;
+        }
+
+        .task-form h3 {
+            color: #555;
+            margin-top: 0;
+        }
+
+        /* Поля ввода */
+        input:not([type="checkbox"]), textarea {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            width: 95%; /* Шире, чтобы занимать больше места */
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Кнопки */
+        button {
+            padding: 8px 15px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        /* Кнопка сохранения */
+        button[onclick="saveTask()"] {
+            background-color: #28a745; /* Зеленый цвет */
+            color: white;
+        }
+        button[onclick="saveTask()"]:hover {
+            background-color: #218838;
+        }
+
+        /* Кнопка очистки */
+        button[onclick="clearForm()"] {
+            background-color: #6c757d; /* Серый цвет */
+            color: white;
+        }
+        button[onclick="clearForm()"]:hover {
+            background-color: #5a6268;
+        }
+
+        /* Кнопки списка задач */
+        .task-item button {
+            background-color: #007bff;
+            color: white;
+            padding: 5px 10px;
+        }
+        .task-item button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Элементы списка задач */
+        .task-item {
+            display: flex; /* Гибкая раскладка для элементов */
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-left: 5px solid #007bff; /* Акцентная левая граница */
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Стиль для выполненных задач */
+        .task-item.completed {
+            border-left-color: #28a745; /* Зеленый цвет для выполненных */
+            opacity: 0.8;
+        }
+
+        .task-content {
+            flex-grow: 1;
+        }
+
+        .task-content strong {
+            display: block; /* Заголовок на новой строке */
+            font-size: 1.1em;
+            color: #007bff;
+        }
+
+        .task-content p {
+            margin: 5px 0 0 0;
+            color: #666;
+        }
+
+        .task-meta {
+            margin-right: 15px;
+            font-size: 0.9em;
+            color: #999;
+        }
+
+        .task-actions {
+            margin-left: auto; /* Сдвигает кнопки вправо */
+        }
+
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>Task Manager</h1>
+    <h1>📝 Task Manager</h1>
 
-    <!-- Task Form -->
     <div class="task-form">
         <h3>Add/Edit Task</h3>
         <input type="hidden" id="taskId">
-        <input type="text" id="title" placeholder="Title" required><br>
-        <textarea id="description" placeholder="Description"></textarea><br>
-        <input type="date" id="dueDate" required><br>
-        <label><input type="checkbox" id="completed"> Completed</label><br>
+
+        <input type="text" id="title" placeholder="Task Title" required>
+        <textarea id="description" placeholder="Detailed description of the task"></textarea>
+        <input type="date" id="dueDate" required>
+
+        <div style="margin: 10px 0;">
+            <label><input type="checkbox" id="completed"> Task Completed</label>
+        </div>
+
         <button onclick="saveTask()">Save Task</button>
-        <button onclick="clearForm()">Clear</button>
+        <button onclick="clearForm()">Clear Form</button>
     </div>
 
-    <!-- Task List -->
     <div id="taskList"></div>
 </div>
 
@@ -39,24 +182,45 @@
 
     async function loadTasks() {
         const response = await fetch('/api/tasks');
-        const tasks = await response.json();
+        // Отсортируем: сначала невыполненные, затем выполненные
+        const tasks = (await response.json()).sort((a, b) => (a.completed === b.completed) ? 0 : a.completed ? 1 : -1);
 
         const taskList = document.getElementById('taskList');
-        taskList.innerHTML = '<h3>Tasks</h3>';
+        taskList.innerHTML = '<h3>Current Tasks</h3>';
+
+        if (tasks.length === 0) {
+            taskList.innerHTML += '<p style="text-align: center; color: #999;">No tasks yet! Add one above.</p>';
+            return;
+        }
 
         tasks.forEach(task => {
             const taskDiv = document.createElement('div');
-            taskDiv.className = 'task-item';
+            // Добавляем класс 'completed', если задача выполнена
+            taskDiv.className = `task-item ${task.completed ? 'completed' : ''}`;
+
+            const dueDateString = new Date(task.dueDate).toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'short'
+            });
+
             taskDiv.innerHTML = `
-                <strong>${task.title}</strong> - ${new Date(task.dueDate).toLocaleDateString()}
-                ${task.completed ? '✓' : '○'}
-                <p>${task.description}</p>
-                <button onclick="editTask(${task.id})">Edit</button>
-                <button onclick="deleteTask(${task.id})">Delete</button>
+                <div class="task-content">
+                    <strong>${task.title}</strong>
+                    <p>${task.description || 'No description provided.'}</p>
+                </div>
+                <div class="task-meta">
+                    Due: ${dueDateString}
+                </div>
+                <div class="task-actions">
+                    <button onclick="editTask(${task.id})">Edit</button>
+                    <button onclick="deleteTask(${task.id})" style="background-color: #dc3545;">Delete</button>
+                </div>
             `;
             taskList.appendChild(taskDiv);
         });
     }
+
+    // *** Логика JS ниже не изменена, кроме добавления форматирования даты и сортировки ***
 
     async function saveTask() {
         const task = {
