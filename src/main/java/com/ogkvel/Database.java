@@ -24,9 +24,11 @@ public class Database {
             System.out.println("Connecting to: " + databaseUrl);
             System.out.println("Username: " + username);
 
-            // Добавляем sslmode=disable в URL
-            String urlWithSSL = databaseUrl + "?sslmode=disable";
-            return DriverManager.getConnection(urlWithSSL, username, password);
+            // ----- ИЗМЕНЕНИЕ ЗДЕСЬ -----
+            // Мы больше не добавляем "?sslmode=disable".
+            // Мы используем URL напрямую из Render, где уже указан "?sslmode=require".
+            return DriverManager.getConnection(databaseUrl, username, password);
+
         } else {
             System.out.println("Using MySQL for local development");
             return DriverManager.getConnection(

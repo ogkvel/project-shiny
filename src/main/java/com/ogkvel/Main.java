@@ -20,6 +20,7 @@ public class Main {
         // Инициализация базы данных
         Database.initializeDatabase();
 
+
         // Настройка маршрутов
         com.ogkvel.controllers.TaskController taskController = new com.ogkvel.controllers.TaskController();
         taskController.setupRoutes();
@@ -31,6 +32,7 @@ public class Main {
 
         get("/health", (req, res) -> {
             try {
+
                 Database.getConnection().close();
                 return "✅ Application is healthy - Database connection OK";
             } catch (Exception e) {
