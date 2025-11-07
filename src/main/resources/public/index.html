@@ -143,17 +143,26 @@
             margin-right: 15px;
             font-size: 0.9em;
             color: #999;
+            flex-shrink: 0; /* Чтобы не сжимался */
         }
 
         .task-actions {
-            margin-left: auto; /* Сдвигает кнопки вправо */
+            margin-left: 15px; /* Немного отступа от даты */
+            flex-shrink: 0; /* Чтобы не сжимался */
+        }
+
+        .task-actions button[onclick^="deleteTask"] {
+            background-color: #dc3545; /* Красный для удаления */
+        }
+        .task-actions button[onclick^="deleteTask"]:hover {
+            background-color: #c82333;
         }
 
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>📝 Task Manager</h1>
+    <h1>Task Manager</h1>
 
     <div class="task-form">
         <h3>Add/Edit Task</h3>
@@ -182,7 +191,7 @@
 
     async function loadTasks() {
         const response = await fetch('/api/tasks');
-        // Отсортируем: сначала невыполненные, затем выполненные
+        // Сортируем: сначала невыполненные, затем выполненные
         const tasks = (await response.json()).sort((a, b) => (a.completed === b.completed) ? 0 : a.completed ? 1 : -1);
 
         const taskList = document.getElementById('taskList');
@@ -198,6 +207,7 @@
             // Добавляем класс 'completed', если задача выполнена
             taskDiv.className = `task-item ${task.completed ? 'completed' : ''}`;
 
+            // Форматируем дату для отображения
             const dueDateString = new Date(task.dueDate).toLocaleDateString('ru-RU', {
                 day: 'numeric',
                 month: 'short'
@@ -213,14 +223,12 @@
                 </div>
                 <div class="task-actions">
                     <button onclick="editTask(${task.id})">Edit</button>
-                    <button onclick="deleteTask(${task.id})" style="background-color: #dc3545;">Delete</button>
+                    <button onclick="deleteTask(${task.id})">Delete</button>
                 </div>
             `;
             taskList.appendChild(taskDiv);
         });
     }
-
-    // *** Логика JS ниже не изменена, кроме добавления форматирования даты и сортировки ***
 
     async function saveTask() {
         const task = {
@@ -243,6 +251,7 @@
         loadTasks();
     }
 
+    // ИСПРАВЛЕНО: Убедились в правильном форматировании даты и установке editingId
     async function editTask(id) {
         const response = await fetch(`/api/tasks/${id}`);
         const task = await response.json();
@@ -250,9 +259,13 @@
         document.getElementById('taskId').value = task.id;
         document.getElementById('title').value = task.title;
         document.getElementById('description').value = task.description;
+
+        // КРИТИЧЕСКИ ВАЖНО: Заполнение поля даты в формате YYYY-MM-DD
         document.getElementById('dueDate').value = task.dueDate.split('T')[0];
+
         document.getElementById('completed').checked = task.completed;
 
+        // Установка ID для режима редактирования
         editingId = id;
     }
 
@@ -263,12 +276,15 @@
         }
     }
 
+    // ИСПРАВЛЕНО: Убедились, что editingId сбрасывается
     function clearForm() {
         document.getElementById('taskId').value = '';
         document.getElementById('title').value = '';
         document.getElementById('description').value = '';
         document.getElementById('dueDate').value = '';
         document.getElementById('completed').checked = false;
+
+        // Сброс режима редактирования
         editingId = null;
     }
 </script>
